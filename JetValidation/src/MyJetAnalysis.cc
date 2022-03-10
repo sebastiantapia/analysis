@@ -85,20 +85,7 @@ int MyJetAnalysis::Init(PHCompositeNode* topNode)
 
   cout << "MyJetAnalysis::Init - Outoput to " << m_outputFileName << endl;
 
-  // Histograms
-  m_hInclusiveE = new TH1F(
-      "hInclusive_E",  //
-      TString(m_recoJetName) + " inclusive jet E;Total jet energy (GeV)", 100, 0, 100);
-
-  m_hInclusiveEta =
-      new TH1F(
-          "hInclusive_eta",  //
-          TString(m_recoJetName) + " inclusive jet #eta;#eta;Jet energy density", 50, -1, 1);
-  m_hInclusivePhi =
-      new TH1F(
-          "hInclusive_phi",  //
-          TString(m_recoJetName) + " inclusive jet #phi;#phi;Jet energy density", 50, -M_PI, M_PI);
-
+  // congigure Tree
   initializeTrees();
   
   return Fun4AllReturnCodes::EVENT_OK;
@@ -109,9 +96,6 @@ int MyJetAnalysis::End(PHCompositeNode* topNode)
   cout << "MyJetAnalysis::End - Output to " << m_outputFileName << endl;
   PHTFileServer::get().cd(m_outputFileName);
 
-  m_hInclusiveE->Write();
-  m_hInclusiveEta->Write();
-  m_hInclusivePhi->Write();
   m_T->Write();
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -119,35 +103,34 @@ int MyJetAnalysis::End(PHCompositeNode* topNode)
 
 int MyJetAnalysis::InitRun(PHCompositeNode* topNode)
 {
-  cout << "MyJetAnalysis::InitRun" << endl;
-  m_jetEvalStack = shared_ptr<JetEvalStack>(new JetEvalStack(topNode, m_recoJetName, m_truthJetName));
-  m_jetEvalStack->get_stvx_eval_stack()->set_use_initial_vertex(initial_vertex);
+  if (Verbosity() >= MyJetAnalysis::VERBOSITY_SOME) 
+	cout << "MyJetAnalysis::InitRun" << endl;
+
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
 int MyJetAnalysis::process_event(PHCompositeNode* topNode)
 {
-  cout << "MyJetAnalysis::process_event" << endl;
+  
   if (Verbosity() >= MyJetAnalysis::VERBOSITY_SOME)
     cout << "MyJetAnalysis::process_event() entered" << endl;
 
-  //m_jetEvalStack->next_event(topNode);
-  //JetRecoEval* recoeval = m_jetEvalStack->get_reco_eval();
   ++m_event;
 
   if( (m_event % 10) == 0 ) cout << "Event number = "<< m_event << endl;
 
 
-  // interface to jets
+  // interface reco to jets
   JetMap* jets = findNode::getClass<JetMap>(topNode, m_recoJetName);
   if (!jets)
   {
     cout
-        << "MyJetAnalysis::process_event - Error can not find DST JetMap node "
+        << "MyJetAnalysis::process_event - Error can not find DST Reco JetMap node "
         << m_recoJetName << endl;
     exit(-1);
   }
-
+  
+  // interface truth to jets
   JetMap* jetsMC = findNode::getClass<JetMap>(topNode, m_truthJetName);
   if (!jetsMC)
   {
@@ -170,6 +153,7 @@ int MyJetAnalysis::process_event(PHCompositeNode* topNode)
     }
   }
 
+ // interface truth particles
  PHG4TruthInfoContainer *truthinfo = findNode::getClass<PHG4TruthInfoContainer>(topNode, "G4TruthInfo");
   if (!truthinfo)
  {

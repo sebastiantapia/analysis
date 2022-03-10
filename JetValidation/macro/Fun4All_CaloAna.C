@@ -56,7 +56,7 @@ void Fun4All_CaloAna(const char *filelisttruth = "dst_truth_test.list",
 
   
   Fun4AllServer *se = Fun4AllServer::instance();
-  int verbosity = 2;
+  int verbosity = 0;
 
   se->Verbosity(verbosity);
   recoConsts *rc = recoConsts::instance();
@@ -148,7 +148,7 @@ void Fun4All_CaloAna(const char *filelisttruth = "dst_truth_test.list",
   se->registerInputManager(in2);
 
   
-  se->run(-1);
+  se->run(100);
   se->End();
 
 gSystem->Exit(0);
